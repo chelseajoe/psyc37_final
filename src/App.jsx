@@ -45,7 +45,11 @@ const App = () => {
 
   // Timer state
   const [timeLeft, setTimeLeft] = useState(180);
-  const [showTimer, setShowTimer] = useState(false);
+  const [showTimer, setShowTimer] = useState(true);
+  const [timerRunning, setTimerRunning] = useState(false);
+
+
+  
 
   const toggleStrategy = (strategy) => {
     setSelected((prev) =>
@@ -58,8 +62,8 @@ const App = () => {
     setScoreHistory([]);
     setDecisionHistory([]);
     setStaticPairwiseData([]);
-    setTimeLeft(180);
-    setShowTimer(true);
+    // setTimeLeft(180);
+    // setShowTimer(true);
   
     let scores = {};
     let history = [];
@@ -123,19 +127,42 @@ const App = () => {
   };
   
 
+
+  const [scrollY, setScrollY] = useState(0);
+
   useEffect(() => {
-    if (timeLeft === 0 || !showTimer) return;
+    const handleKeyPress = (event) => {
+      if (event.code === "Space") {
+        setTimerRunning(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, []);
+
+  useEffect(() => {
+    if (!timerRunning || timeLeft === 0) return;
     const intervalId = setInterval(() => {
       setTimeLeft((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
     }, 1000);
     return () => clearInterval(intervalId);
-  }, [timeLeft, showTimer]);
+  }, [timerRunning, timeLeft]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
+
+  
 
   const pairwiseGraphData = useMemo(() => {
     return staticPairwiseData.map(({ stratA, stratB, scores, finalA, finalB }, index) => (
@@ -165,6 +192,7 @@ const App = () => {
             }}
           />
         </div>
+        
         <table className="table table-bordered mt-2">
           <thead>
             <tr>
@@ -188,38 +216,39 @@ const App = () => {
   }, [staticPairwiseData]);
 
   return (
-    <div className="position-absolute top-0 start-0" style={{ marginLeft: "10vw", marginTop: "3vw", marginRight: "15vw" }}>
+    <div className="position-absolute top-0 start-0" style={{ marginLeft: "10vw", marginTop: "3vw", marginRight: "18vw" }}>
       {showTimer && (
-        <div style={{ position: "absolute", top: "0", right: "0", fontSize: "24px", fontWeight: "bold" }}>
+        <div style={{ position: "fixed", top: "2vw", right: "7vw", fontSize: "24px", fontWeight: "bold" }}>
           {formatTime(timeLeft)}
+          
         </div>
       )}
       <h1>Modeling Generosity: Why It Pays to Be Kind</h1>
       <h3 className="text-muted">
         <em>PSYC 37 Final Project</em>
       </h3>
-      <h5 className="text-muted">Chelsea Joe<br />Professor O'Neill</h5>
+      <h5 className="text-muted opacity-80">Chelsea Joe<br />Professor O'Neill</h5>
+
 
     
       <Tabs defaultActiveKey="overview" className="mt-3">
         <Tab eventKey="overview" title="General Overview">
 
         <br></br>
-        <div class="prisoners-dilemma">
+        <div className="prisoners-dilemma">
         <h2>Prisoner's Dilemma</h2>
         <p><strong>You and your friend robbed a bank and were caught. The police have decided to interrogate you separately.</strong></p>
         <p>The police want both of you to betray each other, and they ask you if your friend was involved in the robbery.</p>
-        <p><em>You and your friend can either choose to confess or defect...</em></p>
+        <p><em>You and your friend can either choose to cooperate or defect...</em></p>
         <p><strong>What do you do?</strong></p>
       </div>
 
+      <hr className="my-4" />
 
 
 
 
-      <br></br>
-        <h3>Payoff Matrix</h3>
-        
+        <h3 className="mt-4">Payoff Matrix</h3>
 
 <table style={{ 
   width: "350px", 
@@ -228,13 +257,21 @@ const App = () => {
   textAlign: "center", 
   border: "2px solid black" 
 }}>
+  <tbody>
   <tr>
     <th style={{ border: "1px solid black", padding: "10px" }}></th>
-    <th style={{ border: "1px solid black", padding: "10px" }}>Opponent Cooperates</th>
-    <th style={{ border: "1px solid black", padding: "10px" }}>Opponent Defects</th>
+    <th style={{ border: "1px solid black", padding: "10px" }}>
+  <span style={{ color: "red" }}>Opponent </span>Cooperates
+</th>
+<th style={{ border: "1px solid black", padding: "10px" }}>
+  <span style={{ color: "red" }}>Opponent </span>Defects
+</th>
+
   </tr>
   <tr>
-    <th style={{ border: "1px solid black", padding: "10px" }}>You Cooperate</th>
+    {/* <th style={{ border: "1px solid black", padding: "10px" }}>You Cooperate</th> */}
+    <th style={{ border: "1px solid black", padding: "10px" }}>
+  <span style={{ color: "blue" }}>You</span> Cooperate</th>
     <td style={{ border: "1px solid black", width: "150px", height: "120px", fontSize: "24px" }}>
       <span style={{ color: "blue", fontWeight: "bold" }}>1</span>, 
       <span style={{ color: "red", fontWeight: "bold" }}>1</span>
@@ -245,7 +282,8 @@ const App = () => {
     </td>
   </tr>
   <tr>
-    <th style={{ border: "1px solid black", padding: "10px" }}>You Defect</th>
+  <th style={{ border: "1px solid black", padding: "10px" }}>
+  <span style={{ color: "blue" }}>You</span> Defect</th>
     <td style={{ border: "1px solid black", width: "150px", height: "120px", fontSize: "24px" }}>
       <span style={{ color: "blue", fontWeight: "bold" }}>0</span>, 
       <span style={{ color: "red", fontWeight: "bold" }}>5</span>
@@ -262,15 +300,18 @@ const App = () => {
       <span style={{ color: "red", fontWeight: "bold" }}>3</span>
     </td>
   </tr>
+  </tbody>
 </table>
 
-<br></br>
 
-<div class="nash-equilibrium">
-  <h3>Nash Equilibrium (Mathematical Explanation)</h3>
+<br></br>
+<hr></hr>
+
+<div className="nash-equilibrium">
+  <h3 className="mt-4">Nash Equilibrium (Mathematical Explanation)</h3>
   <p><strong>The best choice for both players is to defect.</strong></p>
-  <p><strong>Why?</strong></p>
-  <p>Let's look at the situation from your friend's perspective:</p>
+  <p><strong><em>Why?</em></strong></p>
+  <p>Let's look at the situation from our friend's perspective:</p>
   <ul>
     <li>If your friend chooses to defect, your best option is to defect too, so that you both get 3 years, instead of you serving 5 years and your friend serving none.</li>
     <li>If your friend chooses to cooperate, your best option (from a mathematical standpoint) is to defect, so that you serve no time at all.</li>
@@ -278,54 +319,55 @@ const App = () => {
   <p><strong>Therefore, the best option for both players is to defect.</strong></p>
 </div>
 
+<hr className="my-4" />
+
     
-<div class="iterated-prisoners-dilemma">
+<div className="iterated-prisoners-dilemma">
   <h2>Iterated Prisoner's Dilemma</h2>
-  <div class="ipd-description">
-    <p><strong>The Iterated Prisoner's Dilemma (IPD)</strong> is a repeated version of the original Prisoner’s Dilemma.</p>
+  <div className="ipd-description">
+    <p><strong>The Iterated Prisoner's Dilemma </strong> is a repeated version of the original Prisoner’s Dilemma.</p>
     <p>In this game, the players make decisions repeatedly, allowing for a long-term relationship between them.</p>
     <p>If it were a one-off choice, it would be much easier to defect and forget. However, with repeated interactions, the choices you make now impact future outcomes.</p>
   </div>
 </div>
 
+<hr className="my-4" />
 
-<div class="strategies">
-  <h3>Strategies</h3>
 
-  <div class="strategy">
-    <h4>1. Tit for Tat</h4>
-    <p><strong> &nbsp;&nbsp;&nbsp;&nbsp; Strategy:</strong> Starts with cooperation, then copies the opponent’s last move.</p>
-    <p><strong> &nbsp;&nbsp;&nbsp;&nbsp; Effect:</strong> Rewards cooperation, punishes defection.</p>
+<div className="strategies">
+  <h2>Strategies</h2>
+
+  <div className="strategy">
+    <h5 className="mt-4"><em>1. Tit for Tat</em></h5>
+    <p className="mb-2"><strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Strategy:</strong> Starts with cooperation, then copies the opponent’s last move.</p>
+    <p className="mt-0"><strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Effect:</strong> Rewards cooperation, punishes defection.</p>
   </div>
 
-  <div class="strategy">
-    <h4>2. Always Cooperate</h4>
-    <p><strong> &nbsp;&nbsp;&nbsp;&nbsp; Strategy:</strong> Always chooses to cooperate.</p>
-    <p><strong> &nbsp;&nbsp;&nbsp;&nbsp; Effect:</strong> Promotes trust but is easily exploited.</p>
+  <div className="strategy">
+    <h5 className="mt-4"><em>2. Always Cooperate</em></h5>
+    <p className="mb-2"><strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Strategy:</strong> Always chooses to cooperate.</p>
+    <p className="mt-0"><strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Effect:</strong> Promotes trust but is easily exploited.</p>
   </div>
 
-  <div class="strategy">
-    <h4>3. Always Defect</h4>
-    <p><strong> &nbsp;&nbsp;&nbsp;&nbsp; Strategy:</strong> Always chooses to defect.</p>
-    <p><strong> &nbsp;&nbsp;&nbsp;&nbsp; Effect:</strong> Gains short-term benefits but leads to loss of trust.</p>
+  <div className="strategy">
+    <h5 className="mt-4"><em>3. Always Defect</em></h5>
+    <p className="mb-2"><strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Strategy:</strong> Always chooses to defect.</p>
+    <p className="mt-0"><strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Effect:</strong> Gains short-term benefits but leads to loss of trust.</p>
   </div>
 
-  <div class="strategy">
-    <h4>4. Random</h4>
-    <p><strong> &nbsp;&nbsp;&nbsp;&nbsp; Strategy:</strong> Randomly chooses to cooperate or defect.</p>
-    <p><strong> &nbsp;&nbsp;&nbsp;&nbsp; Effect:</strong> Unpredictable, partner cannot trust you.</p>
+  <div className="strategy">
+    <h5 className="mt-4"><em>4. Random</em></h5>
+    <p className="mb-2"><strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Strategy:</strong> Randomly chooses to cooperate or defect.</p>
+    <p className="mt-0"><strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Effect:</strong> Unpredictable, partner cannot trust you.</p>
   </div>
 </div>
 
 
 
-
         </Tab>
         <Tab eventKey="simulation" title="Simulation">
-          <h3>Simulation</h3>
-
-
-      <h3 className="mt-5">Select Strategies</h3>
+        <h2 className="mt-3">Iterated Prisoner's Dilemma Simulation</h2>
+      <h3 className="mt-3">Select Strategies</h3>
       {strategies.map((strategy) => (
         <div key={strategy} className="form-check">
           <input
@@ -382,18 +424,22 @@ const App = () => {
     
     <Tab eventKey="research" title="Research Question">
   <div className="content">
-    <h1>Main Argument</h1>
-    <p>The key to a happy and successful life lies in generosity, which builds trust, and forgiveness, which sustains relationships through cooperation.</p>
+  <h2 className="mt-3">Main Argument</h2>
+    <p>The key to a happy and successful life lies in <strong>generosity</strong>, which builds trust, and <strong>forgiveness</strong>, which sustains relationships through cooperation.</p>
 
-    <p>I wanted to focus my commentary on the positive rather than the negative. In the Prisoner’s Dilemma, Tit for Tat prevents exploitation by remembering an opponent’s last move and defecting if betrayed. Instead of focusing on its retaliative nature, I want to emphasize the neuroscience and the benefits behind its forgiveness, and trust with other cooperative strategies.</p>
+    <p>I wanted to focus the commentary on the positive rather than the negative. In the Prisoner’s Dilemma, Tit for Tat prevents exploitation by remembering an opponent’s last move and defecting if betrayed. Instead of focusing on its retaliative nature, we should emphasize the neuroscience and the benefits behind its forgiveness and trust building with other cooperative strategies.</p>
+    
+    <hr className="my-4" />
 
-    <h2>Generosity and Trust</h2>
+    <h3 className="mt-0">Generosity -> Trust</h3>
+    {/* <h2>Generosity and Trust</h2> */}
     <p>Violations of trust activate social cognitive-related brain areas, specifically the default mode network [1]. This means that when trust is broken, the brain processes it as a social threat, making future cooperation less likely. Trust activates the paracingulate cortex, which helps in predicting others’ intentions and maintaining relationships. The septal area, associated with social attachment, is selectively activated in unconditional trust (trust given without requiring immediate reciprocation) [2].</p>
 
     <p>When building a relationship, partners must infer each other’s intentions to determine mutual trust and reciprocity. Generosity, or acts of goodwill, counteract trust violations by signaling trustworthiness without the expectation of reciprocation.</p>
 
-    <h2>Forgiveness and Emotional Well-Being</h2>
-    <p>Forgiveness mediates the relationship between the middle frontal gyrus volume and both depressive and anxiety symptom levels in adolescents. Those with a greater capacity for forgiveness had lower depression and anxiety levels, suggesting that forgiveness is not only altruistic but also beneficial for long-term emotional well-being [3].</p>
+    {/* <h2>Forgiveness and Emotional Well-Being</h2> */}
+    <h3 className="mt-5">Forgiveness -> Emotional Well-Being</h3>
+    <p>Forgiveness mediates the relationship between the middle frontal gyrus volume and both depressive and anxiety symptom levels in adolescents. Adolescents with a greater capacity for forgiveness had lower depression and anxiety levels, suggesting that forgiveness is not only altruistic but also beneficial for long-term emotional well-being [3].</p>
 
     <p>As an evolutionary strategy, forgiveness helps assess whether maintaining relationships is worthwhile [4]. While vengeance activates reward-based brain areas, forgiveness engages the prefrontal cortex to inhibit revenge impulses, showing that forgiveness is an active, strategic choice. Three cognitive mechanisms facilitate forgiveness [5]:</p>
 
@@ -403,7 +449,10 @@ const App = () => {
       <li><strong>Social valuation:</strong> Prioritizing future relationship benefits</li>
     </ul>
 
-    <h2>References</h2>
+    <hr className="my-4" />
+    <h3 className="mt-2">References</h3>
+    
+    {/* <h2>References</h2> */}
     <ol>
       <li className="citation">van der Werff, L., O’Shea, D., Healy, G., Buckley, F., Real, C., Keane, M., & Lynn, T. (2023). The neuroscience of trust violation: Differential activation of the default mode network in ability, benevolence, and integrity breaches. Applied Psychology., 72(4), 1392–1408. <a href="https://doi.org/10.1111/apps.12437" target="_blank">https://doi.org/10.1111/apps.12437</a></li>
       <li className="citation">Krueger, F., McCabe, K., Moll, J., Kriegeskorte, N., Zahn, R., Strenziok, M., Heinecke, A., & Grafman, J. (2007). Neural correlates of trust. Proceedings of the National Academy of Sciences, 104(50), 20084–20089. <a href="https://doi.org/10.1073/pnas.0710103104" target="_blank">https://doi.org/10.1073/pnas.0710103104</a></li>
